@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title ~ " · " if title }}{{ empresa }} · Panel interno</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo_maza.jpg') }}">
+    <link href="{{ url_for('static', filename='vendor/css/fonts.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/css/buttons.bootstrap5.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/css/fontawesome.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+</head>
+<body class="{% if not current_user.is_authenticated %}auth-screen{% endif %}">
+<div class="app-shell">
+    {% if current_user.is_authenticated %}
+    {% set ep = request.endpoint or '' %}
+    <aside class="sidebar" id="sidebar">
+        <a class="brand-block" href="{{ url_for('dashboard.inicio') }}">
+            <img src="{{ url_for('static', filename='img/logo_maza.jpg') }}" alt="MAZA Auto Repuestos">
+        </a>
+        <div class="brand-sub">Panel interno de gestión</div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-label">General</div>
+            <a class="nav-link {% if ep == 'dashboard.inicio' %}active{% endif %}" href="{{ url_for('dashboard.inicio') }}"><i class="fa-solid fa-gauge-high"></i><span>Inicio</span></a>
+
+            <div class="nav-label">Inventario</div>
+            <a class="nav-link {% if ep.startswith('productos.') %}active{% endif %}" href="{{ url_for('productos.lista') }}"><i class="fa-solid fa-boxes-stacked"></i><span>Productos</span></a>
+            <a class="nav-link {% if ep == 'inventario.existencias' %}active{% endif %}" href="{{ url_for('inventario.existencias') }}"><i class="fa-solid fa-warehouse"></i><span>Existencias</span></a>
+            <a class="nav-link {% if ep == 'inventario.kardex' %}active{% endif %}" href="{{ url_for('inventario.kardex') }}"><i class="fa-solid fa-right-left"></i><span>Movimientos</span></a>
+            {% if current_user.puede('gerencia', 'almacen') %}
+            <a class="nav-link {% if ep in ('inventario.ajuste', 'inventario.transferencia') %}active{% endif %}" href="{{ url_for('inventario.ajuste') }}"><i class="fa-solid fa-sliders"></i><span>Ajustes y traspasos</span></a>
+            {% endif %}
+
+            <div class="nav-label">Comercial</div>
+            <a class="nav-link {% if ep in ('ventas.lista', 'ventas.nueva', 'ventas.detalle') %}active{% endif %}" href="{{ url_for('ventas.lista') }}"><i class="fa-solid fa-cash-register"></i><span>Ventas</span></a>
+            <a class="nav-link {% if ep.startswith('ventas.cliente') %}active{% endif %}" href="{{ url_for('ventas.clientes') }}"><i class="fa-solid fa-store"></i><span>Clientes</span></a>
+            <a class="nav-link {% if ep.startswith('pedidos.') %}active{% endif %}" href="{{ url_for('pedidos.lista') }}"><i class="fa-solid fa-circle-exclamation"></i><span>Pedidos no atendidos</span></a>
+
+            <div class="nav-label">Abastecimiento</div>
+            <a class="nav-link {% if ep in ('compras.lista', 'compras.nueva', 'compras.detalle') %}active{% endif %}" href="{{ url_for('compras.lista') }}"><i class="fa-solid fa-truck-ramp-box"></i><span>Compras</span></a>
+            <a class="nav-link {% if ep == 'reportes.reposicion' %}active{% endif %}" href="{{ url_for('reportes.reposicion') }}"><i class="fa-solid fa-bell"></i><span>Reposición sugerida</span></a>
+            <a class="nav-link {% if ep.startswith('compras.proveedor') %}active{% endif %}" href="{{ url_for('compras.proveedores') }}"><i class="fa-solid fa-industry"></i><span>Proveedores</span></a>
+
+            <div class="nav-label">Reportes</div>
+            <a class="nav-link {% if ep == 'reportes.abc' %}active{% endif %}" href="{{ url_for('reportes.abc') }}"><i class="fa-solid fa-ranking-star"></i><span>Clasificación ABC</span></a>
+            <a class="nav-link {% if ep == 'reportes.rotacion' %}active{% endif %}" href="{{ url_for('reportes.rotacion') }}"><i class="fa-solid fa-hourglass-half"></i><span>Rotación y stock lento</span></a>
+            <a class="nav-link {% if ep == 'reportes.clientes' %}active{% endif %}" href="{{ url_for('reportes.clientes') }}"><i class="fa-solid fa-handshake"></i><span>Clientes mayoristas</span></a>
+            <a class="nav-link {% if ep == 'reportes.indicadores' %}active{% endif %}" href="{{ url_for('reportes.indicadores') }}"><i class="fa-solid fa-bullseye"></i><span>Indicadores del plan</span></a>
+
+            {% if current_user.puede('gerencia') %}
+            <div class="nav-label">Administración</div>
+            {% if current_user.rol == 'admin' %}
+            <a class="nav-link {% if ep.startswith('admin.usuario') %}active{% endif %}" href="{{ url_for('admin.usuarios') }}"><i class="fa-solid fa-user-gear"></i><span>Usuarios</span></a>
+            {% endif %}
+            <a class="nav-link {% if ep == 'admin.importar' %}active{% endif %}" href="{{ url_for('admin.importar') }}"><i class="fa-solid fa-file-arrow-up"></i><span>Importar productos</span></a>
+            {% if current_user.rol == 'admin' %}
+            <a class="nav-link {% if ep == 'admin.bitacora' %}active{% endif %}" href="{{ url_for('admin.bitacora') }}"><i class="fa-solid fa-clock-rotate-left"></i><span>Bitácora</span></a>
+            {% endif %}
+            {% endif %}
+        </nav>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    {% endif %}
+
+    <main class="main-panel">
+        {% if current_user.is_authenticated %}
+        <header class="topbar">
+            <button class="icon-button" id="sidebarToggle" type="button" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="topbar-title">
+                <span>{{ title or 'Panel' }}</span>
+                {% if demo_mode %}<small class="demo-pill" title="Los precios, el stock, los clientes y las ventas son de ejemplo. Los códigos vienen de los catálogos reales."><i class="fa-solid fa-flask"></i> Datos de ejemplo</small>{% endif %}
+            </div>
+            <div class="topbar-actions">
+                {% if current_user.puede('gerencia', 'ventas', 'almacen') %}
+                <a class="btn btn-sm btn-maza-outline d-none d-md-inline-flex" href="{{ url_for('pedidos.nuevo') }}"><i class="fa-solid fa-circle-exclamation"></i> No había stock</a>
+                {% endif %}
+                {% if current_user.puede('gerencia', 'ventas') %}
+                <a class="btn btn-sm btn-maza" href="{{ url_for('ventas.nueva') }}"><i class="fa-solid fa-plus"></i> <span class="d-none d-sm-inline">Nueva venta</span></a>
+                {% endif %}
+                <div class="dropdown">
+                    <button class="user-chip" data-bs-toggle="dropdown" type="button">
+                        <span class="user-avatar">{{ current_user.nombre_completo[:1] }}</span>
+                        <span class="d-none d-lg-block text-start"><b>{{ current_user.nombre_completo }}</b><small>{{ current_user.rol_nombre }}</small></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i>Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <section class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/buttons.bootstrap5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/jszip.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/buttons.html5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/buttons.print.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

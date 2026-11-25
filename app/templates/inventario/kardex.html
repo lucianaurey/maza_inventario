@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>Movimientos</h1><p>Kardex general: cada entrada, salida, ajuste y transferencia.</p></div></div>
+<form class="filter-bar card-box" method="get">
+    <label>Desde<input class="form-control" type="date" name="desde" value="{{ desde }}"></label>
+    <label>Hasta<input class="form-control" type="date" name="hasta" value="{{ hasta }}"></label>
+    <label>Tipo<select class="form-select" name="tipo">
+        <option value="">Todos</option>
+        {% for t in ['entrada', 'salida', 'ajuste', 'transferencia'] %}<option value="{{ t }}" {% if tipo == t %}selected{% endif %}>{{ t|capitalize }}</option>{% endfor %}
+    </select></label>
+    <label>Almacén<select class="form-select" name="almacen_id">
+        <option value="">Todos</option>
+        {% for a in almacenes %}<option value="{{ a.id }}" {% if almacen_id == a.id %}selected{% endif %}>{{ a.nombre }}</option>{% endfor %}
+    </select></label>
+    <button class="btn btn-dark-soft" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+</form>
+<div class="card-box mt-section">
+    <table class="table table-hover js-datatable" data-order='[[0,"desc"]]' data-export-title="Movimientos MAZA">
+        <thead><tr><th>Fecha</th><th>Código</th><th>Producto</th><th>Almacén</th><th>Tipo</th><th>Motivo</th><th>Ref.</th><th class="num">Cant.</th><th class="num">Saldo</th></tr></thead>
+        <tbody>
+        {% for m in movimientos %}
+        <tr>
+            <td data-order="{{ m.fecha.isoformat() }}">{{ m.fecha | fecha(true) }}</td>
+            <td><a class="code" href="{{ url_for('productos.detalle', producto_id=m.producto_id) }}">{{ m.producto.codigo }}</a></td>
+            <td class="small-text">{{ m.producto.nombre }}</td>
+            <td class="small-text">{{ m.almacen.ciudad }}</td>
+            <td>{{ m.tipo }}</td><td class="small-text">{{ m.motivo }}</td><td class="code">{{ m.referencia or '' }}</td>
+            <td class="num {{ 'text-success' if m.cantidad > 0 else 'text-red' }}"><b>{{ '%+d' % m.cantidad }}</b></td>
+            <td class="num">{{ m.saldo }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

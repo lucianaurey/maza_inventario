@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, product_picker %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Transferencia entre almacenes</h1><p>Mueve stock entre Santa Cruz y Cochabamba; se registra la salida en un almacén y la entrada en el otro.</p></div>
+    <div class="page-actions"><a class="btn btn-light-line" href="{{ url_for('inventario.ajuste') }}"><i class="fa-solid fa-sliders"></i> Ajuste</a></div>
+</div>
+<form method="post" class="card-box" style="max-width:860px" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.producto_id(type="hidden", id="producto_id") }}
+    <div class="row g-3">
+        <div class="col-12">{{ product_picker('producto_id', almacen='origen_id') }}</div>
+        {{ field(form.origen_id, "col-md-4") }}
+        {{ field(form.destino_id, "col-md-4") }}
+        {{ field(form.cantidad, "col-md-4") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-right-left"></i> Transferir</button></div>
+</form>
+{% endblock %}

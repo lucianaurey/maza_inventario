@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Proveedores</h1><p>Los días de entrega ayudan a definir el punto de reorden.</p></div>
+    <div class="page-actions">{% if current_user.puede('gerencia', 'almacen') %}<a class="btn btn-maza" href="{{ url_for('compras.proveedor_form') }}"><i class="fa-solid fa-plus"></i> Nuevo proveedor</a>{% endif %}</div>
+</div>
+<div class="card-box">
+    <table class="table table-hover">
+        <thead><tr><th>Proveedor</th><th>País</th><th>Contacto</th><th>Teléfono</th><th class="num">Días de entrega</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for p in proveedores %}
+        <tr><td><b>{{ p.nombre }}</b></td><td>{{ p.pais or '' }}</td><td>{{ p.contacto or '' }}</td><td>{{ p.telefono or '' }}</td><td class="num">{{ p.dias_entrega }}</td>
+            <td><span class="estado {{ 'activo' if p.activo else 'inactivo' }}">{{ 'activo' if p.activo else 'inactivo' }}</span></td>
+            <td class="text-end">{% if current_user.puede('gerencia', 'almacen') %}<a class="btn btn-sm btn-light-line" href="{{ url_for('compras.proveedor_form', proveedor_id=p.id) }}"><i class="fa-solid fa-pen"></i></a>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

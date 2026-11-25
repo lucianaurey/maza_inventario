@@ -1,0 +1,40 @@
+{% macro field(f, col="col-md-6", help=None) %}
+<div class="{{ col }}">
+    {% if f.type == 'BooleanField' %}
+    <div class="form-check mt-2">
+        {{ f(class="form-check-input") }} {{ f.label(class="form-check-label") }}
+    </div>
+    {% else %}
+    {{ f.label(class="form-label") }}
+    {% if f.type == 'SelectField' %}
+    {{ f(class="form-select" + (" is-invalid" if f.errors else "")) }}
+    {% elif f.type == 'TextAreaField' %}
+    {{ f(class="form-control" + (" is-invalid" if f.errors else ""), rows=2) }}
+    {% else %}
+    {{ f(class="form-control" + (" is-invalid" if f.errors else "")) }}
+    {% endif %}
+    {% endif %}
+    {% for e in f.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+    {% if help %}<div class="help">{{ help }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro abc(clase) %}<span class="badge-abc {{ clase }}">{{ clase }}</span>{% endmacro %}
+
+{% macro marca(m) %}<span class="marca-tag {% if m == 'MAZA Parts' %}maza{% elif m == 'AMC' %}amc{% endif %}">{{ m }}</span>{% endmacro %}
+
+{% macro estado_stock(e) %}
+{% set txt = {'ok': 'Disponible', 'reponer': 'Reponer', 'critico': 'Crítico', 'agotado': 'Agotado'} %}
+<span class="estado {{ e }}">{{ txt.get(e, e) }}</span>
+{% endmacro %}
+
+{% macro product_picker(target, almacen=None, url=None) %}
+<div data-single-product data-target="{{ target }}" {% if almacen %}data-almacen="{{ almacen }}"{% endif %}>
+    <label class="form-label">Producto</label>
+    <div class="search-box">
+        <input class="form-control product-search" type="search" autocomplete="off" placeholder="Escribe código, equivalente o vehículo (ej. 90919-02239, Hilux, CBT)" data-url="{{ url_for('productos.api_buscar') }}">
+        <div class="search-results"></div>
+    </div>
+    <div class="selected-product d-none"></div>
+</div>
+{% endmacro %}

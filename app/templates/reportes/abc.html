@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc, marca %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Clasificación <span class="accent">ABC</span></h1>
+        <p>Ordena los productos por lo que aportan al valor vendido. <b>A</b>: el grupo que suma el primer 80 % de las ventas (no puede faltar). <b>B</b>: hasta el 95 %. <b>C</b>: el resto y lo que no se vendió.</p></div>
+    <form method="get" class="filter-bar mb-0">
+        <label>Periodo<select class="form-select" name="dias" onchange="this.form.submit()">
+            {% for d in [30, 90, 180, 365] %}<option value="{{ d }}" {% if d == dias %}selected{% endif %}>Últimos {{ d }} días</option>{% endfor %}
+        </select></label>
+    </form>
+</div>
+<section class="kpi-grid">
+    {% for r in resumen %}
+    <div class="kpi {{ 'red' if r.clase == 'A' else '' }}">
+        <div class="kpi-label">Clase {{ r.clase }}</div>
+        <div class="kpi-value">{{ r.productos }} <small class="fs-6 muted">productos ({{ r.pct_productos | pct(0) }})</small></div>
+        <div class="kpi-foot">{{ r.pct_valor | pct }} de las ventas · {{ r.valor | money }}</div>
+    </div>
+    {% endfor %}
+</section>
+<div class="card-box">
+    <div class="card-title-row"><h2>Curva de Pareto</h2><small>60 productos más vendidos</small></div>
+    <div class="chart-frame tall"><canvas id="chPareto"></canvas></div>
+</div>
+<div class="card-box mt-section">
+    <table class="table table-hover js-datatable" data-order='[[5,"desc"]]' data-export-title="Clasificación ABC MAZA">
+        <thead><tr><th>Clase</th><th>Código</th><th>Producto</th><th>Categoría</th><th>Marca</th><th class="num">Ventas (Bs)</th><th class="num">% ventas</th><th class="num">% acumulado</th><th class="num">Unid.</th><th class="num">Margen</th><th class="num">Stock</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td data-order="{{ f.clase }}">{{ abc(f.clase) }}</td>
+            <td><a class="code" href="{{ url_for('productos.detalle', producto_id=f.producto.id) }}">{{ f.producto.codigo }}</a></td>
+            <td>{{ f.producto.nombre }}</td>
+            <td class="small-text">{{ f.producto.categoria.nombre }}</td>
+            <td>{{ marca(f.producto.marca) }}</td>
+            <td class="num" data-order="{{ f.valor }}">{{ f.valor | money }}</td>
+            <td class="num" data-order="{{ f.participacion }}">{{ f.participacion | pct(2) }}</td>
+            <td class="num" data-order="{{ f.acumulado }}">{{ f.acumulado | pct(1) }}</td>
+            <td class="num">{{ f.unidades }}</td>
+            <td class="num" data-order="{{ f.margen }}">{{ f.margen | money }}</td>
+            <td class="num">{{ f.stock }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const P = {{ pareto | tojson }};
+MAZA.chart("chPareto", { data: { labels: P.labels, datasets: [
+    { type: "bar", label: "Ventas (Bs)", data: P.valor, backgroundColor: P.acumulado.map((a, i) => (i === 0 || P.acumulado[i - 1] < 80) ? MAZA.RED : (P.acumulado[i - 1] < 95 ? MAZA.INK : "#C9CBD0")), yAxisID: "y" },
+    { type: "line", label: "% acumulado", data: P.acumulado, borderColor: "#7A7D84", pointRadius: 0, tension: .2, yAxisID: "y1" },
+] }, options: { scales: { x: { ticks: { maxRotation: 70, minRotation: 50, font: { size: 9 } } }, y: { ticks: { callback: (v) => (v / 1000) + "k" } }, y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { callback: (v) => v + " %" } } } } });
+</script>
+{% endblock %}

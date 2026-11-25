@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Venta <span class="accent">{{ venta.numero }}</span></h1><p>{{ venta.fecha | fecha(true) }} · <span class="estado {{ venta.estado }}">{{ venta.estado }}</span></p></div>
+    <div class="page-actions">
+        <button class="btn btn-light-line" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir nota</button>
+        {% if venta.estado == 'confirmada' and current_user.puede('gerencia') %}
+        <form method="post" action="{{ url_for('ventas.anular', venta_id=venta.id) }}" onsubmit="return confirm('¿Anular la venta y devolver el stock?')">
+            {{ form.hidden_tag() }}<button class="btn btn-maza-outline" type="submit"><i class="fa-solid fa-ban"></i> Anular</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+<div class="card-box" style="max-width:900px">
+    <div class="doc-head mb-4">
+        <img src="{{ url_for('static', filename='img/logo_maza.jpg') }}" alt="MAZA">
+        <div class="doc-meta">
+            <div class="muted small-text">NOTA DE VENTA (no fiscal)</div>
+            <div class="num">{{ venta.numero }}</div>
+            <div class="small-text">{{ venta.almacen.nombre }}</div>
+        </div>
+    </div>
+    <div class="row small-text mb-3">
+        <div class="col-md-6"><b>Cliente:</b> {{ venta.cliente.nombre if venta.cliente else 'Cliente de mostrador' }}{% if venta.cliente and venta.cliente.nit %} · NIT {{ venta.cliente.nit }}{% endif %}</div>
+        <div class="col-md-6 text-md-end"><b>Canal:</b> {{ venta.canal }} · <b>Precio:</b> {{ venta.tipo_precio }} · <b>Atendió:</b> {{ venta.usuario.nombre_completo if venta.usuario else '—' }}</div>
+    </div>
+    <table class="table">
+        <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cant.</th><th class="num">P. unit.</th><th class="num">Subtotal</th></tr></thead>
+        <tbody>
+        {% for d in venta.detalles %}
+        <tr><td class="code">{{ d.producto.codigo }}</td><td>{{ d.producto.nombre }}</td><td class="num">{{ d.cantidad }}</td><td class="num">{{ d.precio_unitario | money }}</td><td class="num">{{ d.subtotal | money }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            {% if venta.descuento and venta.descuento > 0 %}
+            <tr><td colspan="4" class="num">Subtotal</td><td class="num">{{ venta.subtotal | money }}</td></tr>
+            <tr><td colspan="4" class="num">Descuento</td><td class="num">−{{ venta.descuento | money }}</td></tr>
+            {% endif %}
+            <tr><td colspan="4" class="num"><b>Total</b></td><td class="num"><b>{{ venta.total | money }}</b></td></tr>
+        </tfoot>
+    </table>
+    {% if venta.nota %}<p class="small-text muted mt-3">Nota: {{ venta.nota }}</p>{% endif %}
+    <p class="small-text muted mt-3 mb-0">Pedidos por WhatsApp: 72201855 · 72755044</p>
+</div>
+{% endblock %}

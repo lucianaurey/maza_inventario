@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Importar productos</h1><p>Carga o actualiza productos, precios y parámetros de stock desde un CSV (separado por coma o punto y coma, exportable desde Excel). Las existencias no se tocan: el stock se carga con un ingreso o un ajuste para que quede en el kardex.</p></div>
+    <div class="page-actions"><a class="btn btn-light-line" href="{{ url_for('productos.exportar') }}"><i class="fa-solid fa-download"></i> Descargar plantilla con los productos actuales</a></div>
+</div>
+<div class="grid grid-21">
+    <form method="post" enctype="multipart/form-data" class="card-box" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+            {{ field(form.csv_file, "col-12") }}
+            {{ field(form.actualizar, "col-12") }}
+        </div>
+        <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-file-arrow-up"></i> Importar</button></div>
+        {% if resultado %}
+        <hr>
+        <p class="mb-1"><b>{{ resultado.nuevos }}</b> nuevos · <b>{{ resultado.actualizados }}</b> actualizados · <b>{{ resultado.omitidos }}</b> omitidos</p>
+        {% for e in resultado.errores[:20] %}<div class="small-text text-red">{{ e }}</div>{% endfor %}
+        {% endif %}
+    </form>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Columnas</h2></div>
+        <p class="small-text muted">Obligatorias para productos nuevos: <b>codigo</b> y <b>nombre</b>. El resto es opcional; si una celda está vacía, se mantiene el valor actual.</p>
+        <ul class="small-text mb-0">{% for c in columnas %}<li class="code">{{ c }}</li>{% endfor %}</ul>
+    </div>
+</div>
+{% endblock %}

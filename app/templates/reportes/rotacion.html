@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Rotación y <span class="accent">stock lento</span></h1>
+        <p>Días de inventario = stock ÷ venta diaria promedio. Se marca como «sin rotación» lo que tiene stock y no se vendió en {{ dias_sin }} días o más: candidato a liquidar.</p></div>
+    <form method="get" class="filter-bar mb-0">
+        <label>Venta promedio de<select class="form-select" name="dias" onchange="this.form.submit()">
+            {% for d in [30, 60, 90, 180] %}<option value="{{ d }}" {% if d == dias %}selected{% endif %}>{{ d }} días</option>{% endfor %}
+        </select></label>
+    </form>
+</div>
+<section class="kpi-grid">
+    <div class="kpi red"><div class="kpi-label">Productos sin rotación</div><div class="kpi-value">{{ total_sin }}</div></div>
+    <div class="kpi warn"><div class="kpi-label">Dinero inmovilizado</div><div class="kpi-value">{{ valor_sin | money }}</div><div class="kpi-foot">{{ (valor_sin / valor_total * 100 if valor_total else 0) | pct }} del inventario a costo</div></div>
+    <div class="kpi"><div class="kpi-label">Inventario a costo</div><div class="kpi-value">{{ valor_total | money }}</div></div>
+</section>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-export-title="Rotación MAZA">
+        <thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th class="num">Stock</th><th class="num">Vendidas ({{ dias }} d)</th><th class="num">Venta/día</th><th class="num">Días de inventario</th><th>Última venta</th><th class="num">Valor stock</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td><a class="code" href="{{ url_for('productos.detalle', producto_id=f.producto.id) }}">{{ f.producto.codigo }}</a></td>
+            <td>{{ f.producto.nombre }}</td>
+            <td class="small-text">{{ f.producto.categoria.nombre }}</td>
+            <td class="num">{{ f.stock }}</td>
+            <td class="num">{{ f.unidades }}</td>
+            <td class="num" data-order="{{ f.venta_diaria }}">{{ '%.2f' % f.venta_diaria }}</td>
+            <td class="num" data-order="{{ f.dias_inventario if f.dias_inventario is not none else 99999 }}">{{ f.dias_inventario | round | int if f.dias_inventario is not none else '∞' }}</td>
+            <td data-order="{{ f.ultima_venta.isoformat() if f.ultima_venta else '' }}">{{ f.ultima_venta | fecha }}</td>
+            <td class="num" data-order="{{ f.valor_stock }}">{{ f.valor_stock | money }}</td>
+            <td>{% if f.sin_rotacion %}<span class="estado agotado">Sin rotación</span>{% elif f.dias_inventario is not none and f.dias_inventario < 15 %}<span class="estado reponer">Rota rápido</span>{% else %}<span class="estado ok">Normal</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

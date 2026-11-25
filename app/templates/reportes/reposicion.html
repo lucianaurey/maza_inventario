@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc, estado_stock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Reposición <span class="accent">sugerida</span></h1>
+        <p>Productos que llegaron a su punto de reorden, ordenados primero por clase ABC. La cantidad sugerida lleva el stock hasta su máximo.</p></div>
+    <div class="page-actions">{% if current_user.puede('gerencia', 'almacen') %}<a class="btn btn-maza" href="{{ url_for('compras.nueva', desde_reposicion=1) }}"><i class="fa-solid fa-truck-ramp-box"></i> Crear ingreso con esta lista</a>{% endif %}</div>
+</div>
+<section class="kpi-grid">
+    <div class="kpi red"><div class="kpi-label">Productos por reponer</div><div class="kpi-value">{{ filas|length }}</div><div class="kpi-foot">{{ filas|selectattr('clase', 'equalto', 'A')|list|length }} de clase A</div></div>
+    <div class="kpi"><div class="kpi-label">Inversión estimada</div><div class="kpi-value">{{ costo_total | money }}</div><div class="kpi-foot">a costo promedio</div></div>
+    {% for g in por_proveedor[:3] %}
+    <div class="kpi"><div class="kpi-label">{{ g.proveedor.nombre if g.proveedor else 'Sin proveedor' }}</div><div class="kpi-value fs-4">{{ g.costo | money }}</div><div class="kpi-foot">{{ g.items }} productos{% if g.proveedor %} · <a href="{{ url_for('compras.nueva', desde_reposicion=1, proveedor_id=g.proveedor.id) }}">pedir</a>{% endif %}</div></div>
+    {% endfor %}
+</section>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-export-title="Reposición sugerida MAZA">
+        <thead><tr><th>ABC</th><th>Código</th><th>Producto</th><th>Proveedor</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Reorden</th><th class="num">Máximo</th><th class="num">Pedir</th><th class="num">Costo est.</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td data-order="{{ f.clase }}">{{ abc(f.clase) }}</td>
+            <td><a class="code" href="{{ url_for('productos.detalle', producto_id=f.producto.id) }}">{{ f.producto.codigo }}</a></td>
+            <td>{{ f.producto.nombre }}</td>
+            <td class="small-text">{{ f.producto.proveedor.nombre if f.producto.proveedor else '—' }}</td>
+            <td class="num"><b>{{ f.stock }}</b></td>
+            <td class="num">{{ f.producto.stock_minimo }}</td>
+            <td class="num">{{ f.producto.punto_reorden }}</td>
+            <td class="num">{{ f.producto.stock_maximo }}</td>
+            <td class="num"><b class="text-red">{{ f.sugerido }}</b></td>
+            <td class="num" data-order="{{ f.costo_estimado }}">{{ f.costo_estimado | money }}</td>
+            <td>{{ estado_stock(f.estado) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

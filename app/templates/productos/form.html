@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="page-head">
+    <div><h1>{{ 'Editar ' ~ producto.codigo if producto else 'Nuevo producto' }}</h1>
+        <p>Los parámetros de stock (mínimo, reorden y máximo) son los que usa el panel para avisar qué reponer.</p></div>
+    <div class="page-actions"><a class="btn btn-light-line" href="{{ url_for('productos.detalle', producto_id=producto.id) if producto else url_for('productos.lista') }}">Cancelar</a></div>
+</div>
+<form method="post" class="card-box" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="form-section-title">Identificación</div>
+    <div class="row g-3">
+        {{ field(form.codigo, "col-md-3") }}
+        {{ field(form.codigos_alternos, "col-md-5") }}
+        {{ field(form.categoria_id, "col-md-4") }}
+        {{ field(form.nombre, "col-md-6") }}
+        {{ field(form.marca, "col-md-3") }}
+        {{ field(form.marca_vehiculo, "col-md-3") }}
+        {{ field(form.aplicacion, "col-md-8") }}
+        {{ field(form.unidad, "col-md-4") }}
+        {{ field(form.atributos, "col-md-8") }}
+        {{ field(form.proveedor_id, "col-md-4") }}
+    </div>
+    <div class="form-section-title mt-4">Precios</div>
+    <div class="row g-3">
+        {{ field(form.costo_unitario, "col-md-4", "Se actualiza solo con cada compra (costo promedio).") }}
+        {{ field(form.precio_mayorista, "col-md-4", "Precio para tiendas y talleres.") }}
+        {{ field(form.precio_sugerido, "col-md-4", "Precio único al público; también lo respeta el punto del Supermall.") }}
+    </div>
+    <div class="form-section-title mt-4">Parámetros de stock</div>
+    <div class="row g-3">
+        {{ field(form.stock_minimo, "col-md-4", "Por debajo de esto el producto está en estado crítico.") }}
+        {{ field(form.punto_reorden, "col-md-4", "Al llegar aquí, el panel sugiere volver a pedir.") }}
+        {{ field(form.stock_maximo, "col-md-4", "Cantidad objetivo después de reponer.") }}
+        {{ field(form.activo, "col-12") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
+</form>
+{% endblock %}

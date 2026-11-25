@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Existencias</h1><p>Stock por almacén, ubicación y valor a costo.</p></div>
+    <div class="page-actions">
+        {% if current_user.puede('gerencia', 'almacen') %}
+        <a class="btn btn-light-line" href="{{ url_for('inventario.transferencia') }}"><i class="fa-solid fa-right-left"></i> Transferir</a>
+        <a class="btn btn-maza" href="{{ url_for('inventario.ajuste') }}"><i class="fa-solid fa-sliders"></i> Ajuste / conteo</a>
+        {% endif %}
+    </div>
+</div>
+<section class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Unidades en stock</div><div class="kpi-value">{{ unidades_total | num }}</div></div>
+    <div class="kpi"><div class="kpi-label">Valor a costo</div><div class="kpi-value">{{ valor_total | money }}</div></div>
+    {% for a in almacenes %}
+    <div class="kpi"><div class="kpi-label">{{ a.nombre }}</div><div class="kpi-value">{{ filas | sum(attribute='por_almacen.' ~ loop.index0) | num }}</div><div class="kpi-foot">unidades</div></div>
+    {% endfor %}
+</section>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-order='[[{{ 4 + almacenes|length }},"desc"]]' data-export-title="Existencias MAZA">
+        <thead><tr><th>ABC</th><th>Código</th><th>Producto</th><th>Categoría</th>
+            {% for a in almacenes %}<th class="num">{{ a.ciudad }}</th>{% endfor %}
+            <th class="num">Total</th><th class="num">Valor</th><th>Ubicación</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td data-order="{{ f.clase }}">{{ abc(f.clase) }}</td>
+            <td><a class="code" href="{{ url_for('productos.detalle', producto_id=f.producto.id) }}">{{ f.producto.codigo }}</a></td>
+            <td>{{ f.producto.nombre }}</td>
+            <td class="small-text">{{ f.producto.categoria.nombre }}</td>
+            {% for c in f.por_almacen %}<td class="num">{{ c }}</td>{% endfor %}
+            <td class="num"><b>{{ f.total }}</b></td>
+            <td class="num" data-order="{{ f.valor }}">{{ f.valor | money }}</td>
+            <td class="small-text">{{ f.ubicacion }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

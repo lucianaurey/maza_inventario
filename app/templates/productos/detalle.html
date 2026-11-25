@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc, marca, estado_stock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1><span class="accent">{{ producto.codigo }}</span> {{ abc(clase) }}</h1>
+        <p><b>{{ producto.nombre }}</b> · {{ producto.categoria.nombre }} · {{ marca(producto.marca) }}</p>
+    </div>
+    <div class="page-actions">
+        {% if current_user.puede('gerencia', 'almacen') %}
+        <a class="btn btn-light-line" href="{{ url_for('inventario.ajuste', producto_id=producto.id) }}"><i class="fa-solid fa-sliders"></i> Ajustar stock</a>
+        <a class="btn btn-dark-soft" href="{{ url_for('productos.editar', producto_id=producto.id) }}"><i class="fa-solid fa-pen"></i> Editar</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="kpi-grid">
+    <div class="kpi {{ 'red' if producto.estado_stock in ('agotado', 'critico') else ('warn' if producto.estado_stock == 'reponer' else 'ok') }}">
+        <div class="kpi-label">Stock total</div>
+        <div class="kpi-value">{{ producto.stock_total }} <small class="fs-6 muted">{{ producto.unidad }}s</small></div>
+        <div class="kpi-foot">{{ estado_stock(producto.estado_stock) }} · mín. {{ producto.stock_minimo }} · reorden {{ producto.punto_reorden }} · máx. {{ producto.stock_maximo }}</div>
+    </div>
+    <div class="kpi"><div class="kpi-label">Vendido en 12 meses</div><div class="kpi-value">{{ unidades_anio | num }}</div><div class="kpi-foot">unidades</div></div>
+    <div class="kpi"><div class="kpi-label">Precio mayorista</div><div class="kpi-value">{{ producto.precio_mayorista | money }}</div><div class="kpi-foot">margen {{ producto.margen_mayorista | pct }} · público {{ producto.precio_sugerido | money }}</div></div>
+    <div class="kpi {{ 'red' if no_atendidos else '' }}"><div class="kpi-label">Veces que faltó</div><div class="kpi-value">{{ no_atendidos }}</div><div class="kpi-foot">pedidos no atendidos registrados</div></div>
+</section>
+
+<div class="grid grid-21">
+    <div class="card-box">
+        <div class="card-title-row"><h2>Unidades vendidas por mes</h2></div>
+        <div class="chart-frame"><canvas id="chProd"></canvas></div>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Ficha</h2></div>
+        <dl class="row small-text mb-0">
+            <dt class="col-5">Aplicación</dt><dd class="col-7">{{ producto.aplicacion or '—' }}</dd>
+            <dt class="col-5">Equivalentes</dt><dd class="col-7">{{ producto.codigos_alternos or '—' }}</dd>
+            <dt class="col-5">Atributos</dt><dd class="col-7">{{ producto.atributos or '—' }}</dd>
+            <dt class="col-5">Marca vehículo</dt><dd class="col-7">{{ producto.marca_vehiculo or '—' }}</dd>
+            <dt class="col-5">Proveedor</dt><dd class="col-7">{{ producto.proveedor.nombre if producto.proveedor else '—' }}</dd>
+            <dt class="col-5">Costo promedio</dt><dd class="col-7">{{ producto.costo_unitario | money }}</dd>
+            <dt class="col-5">Fuente</dt><dd class="col-7">{{ producto.fuente or '—' }}{% if producto.pagina_catalogo %}, pág. {{ producto.pagina_catalogo }}{% endif %}</dd>
+        </dl>
+        <hr>
+        <div class="form-section-title">Stock por almacén</div>
+        {% for a in almacenes %}
+        <div class="d-flex justify-content-between"><span>{{ a.nombre }}</span><b>{{ producto.stock_en(a.id) }}</b></div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card-box mt-section">
+    <div class="card-title-row"><h2>Kardex</h2><small>últimos 150 movimientos</small></div>
+    <table class="table table-hover js-datatable" data-order='[[0,"desc"]]' data-export-title="Kardex {{ producto.codigo }}">
+        <thead><tr><th>Fecha</th><th>Almacén</th><th>Tipo</th><th>Motivo</th><th>Referencia</th><th class="num">Cantidad</th><th class="num">Saldo</th><th>Usuario</th></tr></thead>
+        <tbody>
+        {% for m in movimientos %}
+        <tr>
+            <td data-order="{{ m.fecha.isoformat() }}">{{ m.fecha | fecha(true) }}</td>
+            <td class="small-text">{{ m.almacen.nombre }}</td>
+            <td>{{ m.tipo }}</td><td>{{ m.motivo }}</td><td class="code">{{ m.referencia or '' }}</td>
+            <td class="num {{ 'text-success' if m.cantidad > 0 else 'text-red' }}"><b>{{ '%+d' % m.cantidad }}</b></td>
+            <td class="num">{{ m.saldo }}</td>
+            <td class="small-text">{{ m.usuario.username if m.usuario else 'sistema' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const D = {{ chart | tojson }};
+MAZA.chart("chProd", { type: "bar", data: { labels: D.labels, datasets: [{ data: D.data, backgroundColor: MAZA.RED, borderRadius: 4 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+</script>
+{% endblock %}

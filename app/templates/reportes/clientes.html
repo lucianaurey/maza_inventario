@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Clientes <span class="accent">mayoristas</span></h1>
+        <p>Frecuencia de compra y clientes que dejaron de comprar (más de {{ dias_inactivo }} días sin pedidos): a ellos conviene escribirles o visitarlos primero.</p></div>
+</div>
+<section class="kpi-grid">
+    <div class="kpi ok"><div class="kpi-label">Activos</div><div class="kpi-value">{{ activos }}</div></div>
+    <div class="kpi red"><div class="kpi-label">Inactivos</div><div class="kpi-value">{{ inactivos }}</div><div class="kpi-foot">más de {{ dias_inactivo }} días sin comprar</div></div>
+    <div class="kpi"><div class="kpi-label">Registrados</div><div class="kpi-value">{{ filas|length }}</div></div>
+</section>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-order='[[4,"desc"]]' data-export-title="Clientes mayoristas MAZA">
+        <thead><tr><th>Cliente</th><th>Tipo</th><th>Ciudad</th><th class="num">Compras</th><th class="num">Total</th><th class="num">Ticket prom.</th><th class="num">Compra cada</th><th>Última</th><th class="num">Días sin comprar</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td><a href="{{ url_for('ventas.cliente_detalle', cliente_id=f.cliente.id) }}"><b>{{ f.cliente.nombre }}</b></a></td>
+            <td class="small-text">{{ f.cliente.tipo }}</td>
+            <td class="small-text">{{ f.cliente.ciudad }}</td>
+            <td class="num">{{ f.compras }}</td>
+            <td class="num" data-order="{{ f.total }}">{{ f.total | money }}</td>
+            <td class="num" data-order="{{ f.ticket }}">{{ f.ticket | money }}</td>
+            <td class="num" data-order="{{ f.frecuencia or 99999 }}">{{ (f.frecuencia | round | int ~ ' días') if f.frecuencia is not none else '—' }}</td>
+            <td data-order="{{ f.ultima.isoformat() if f.ultima else '' }}">{{ f.ultima | fecha }}</td>
+            <td class="num">{{ f.dias_sin_comprar if f.dias_sin_comprar is not none else '—' }}</td>
+            <td><span class="estado {{ f.estado | replace(' ', '-') }}">{{ f.estado }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

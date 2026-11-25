@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="page-head"><div><h1>{{ 'Editar cliente' if cliente else 'Nuevo cliente' }}</h1><p>Para tiendas: registra si llegó por una visita y si recibió el kit de bienvenida (Propuesta 6).</p></div></div>
+<form method="post" class="card-box" style="max-width:900px" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row g-3">
+        {{ field(form.nombre, "col-md-8") }}
+        {{ field(form.tipo, "col-md-4") }}
+        {{ field(form.ciudad, "col-md-4") }}
+        {{ field(form.zona, "col-md-4") }}
+        {{ field(form.telefono, "col-md-4") }}
+        {{ field(form.nit, "col-md-4") }}
+        {{ field(form.canal_origen, "col-md-4") }}
+        {{ field(form.notas, "col-md-4") }}
+        {{ field(form.registrado_whatsapp, "col-md-4") }}
+        {{ field(form.recibio_kit, "col-md-4") }}
+        {{ field(form.activo, "col-md-4") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
+</form>
+{% endblock %}

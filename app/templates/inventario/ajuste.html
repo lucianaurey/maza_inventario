@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, product_picker %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Ajuste de inventario</h1><p>Para conteos físicos, productos dañados, garantías, muestras del kit de bienvenida o la liquidación de stock lento. Todo queda en el kardex.</p></div>
+    <div class="page-actions"><a class="btn btn-light-line" href="{{ url_for('inventario.transferencia') }}"><i class="fa-solid fa-right-left"></i> Transferencia entre almacenes</a></div>
+</div>
+<form method="post" class="card-box" style="max-width:860px" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.producto_id(type="hidden", id="producto_id") }}
+    <div class="row g-3">
+        <div class="col-12">{{ product_picker('producto_id', almacen='almacen_id') }}
+            {% if producto %}<div class="selected-product"><span class="code">{{ producto.codigo }}</span> · {{ producto.nombre }} · stock total {{ producto.stock_total }}</div>{% endif %}
+        </div>
+        {{ field(form.almacen_id, "col-md-6") }}
+        {{ field(form.tipo, "col-md-6") }}
+        {{ field(form.cantidad, "col-md-6", "En un conteo, escribe la cantidad que contaste; el sistema calcula la diferencia.") }}
+        {{ field(form.motivo, "col-md-6") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-check"></i> Registrar ajuste</button></div>
+</form>
+{% endblock %}

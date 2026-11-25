@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>Bitácora</h1><p>Últimas 500 acciones registradas.</p></div></div>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-order='[[0,"desc"]]' data-export-title="Bitácora MAZA">
+        <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead>
+        <tbody>{% for r in registros %}<tr><td data-order="{{ r.fecha_hora.isoformat() }}">{{ r.fecha_hora | fecha(true) }}</td><td>{{ r.usuario.username if r.usuario else '—' }}</td><td class="code">{{ r.accion }}</td><td class="small-text">{{ r.detalle }}</td><td class="small-text muted">{{ r.ip }}</td></tr>{% endfor %}</tbody>
+    </table>
+</div>
+{% endblock %}

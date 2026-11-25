@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc, estado_stock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Resumen <span class="accent">del mes</span></h1>
+        <p>Qué se vende, qué falta y qué está parado. Primero se asegura el stock de lo que más rota y recién después se anuncia a las tiendas.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-light-line" href="{{ url_for('reportes.reposicion') }}"><i class="fa-solid fa-bell"></i> Reposición</a>
+        <a class="btn btn-dark-soft" href="{{ url_for('reportes.indicadores') }}"><i class="fa-solid fa-bullseye"></i> Indicadores del plan</a>
+    </div>
+</div>
+
+<section class="kpi-grid">
+    <div class="kpi red">
+        <i class="fa-solid fa-circle-exclamation kpi-icon"></i>
+        <div class="kpi-label">Pedidos no atendidos</div>
+        <div class="kpi-value">{{ kpis.pct_no_atendido | pct if kpis.pct_no_atendido is not none else '—' }}</div>
+        <div class="kpi-foot">de las líneas pedidas este mes</div>
+    </div>
+    <div class="kpi">
+        <i class="fa-solid fa-cash-register kpi-icon"></i>
+        <div class="kpi-label">Ventas del mes</div>
+        <div class="kpi-value">{{ kpis.ventas_mes | money }}</div>
+        <div class="kpi-foot">
+            {% if kpis.ventas_variacion is not none %}
+            <span class="{{ 'up' if kpis.ventas_variacion >= 0 else 'down' }}">{{ '+' if kpis.ventas_variacion >= 0 }}{{ kpis.ventas_variacion | pct }}</span> frente al mismo tramo del mes anterior
+            {% else %}sin mes anterior para comparar{% endif %}
+        </div>
+    </div>
+    <div class="kpi warn">
+        <i class="fa-solid fa-bell kpi-icon"></i>
+        <div class="kpi-label">Por reponer</div>
+        <div class="kpi-value">{{ kpis.bajo_minimo + kpis.agotados }}</div>
+        <div class="kpi-foot"><b class="text-red">{{ kpis.agotados }}</b> agotados · {{ kpis.bajo_minimo }} bajo el punto de reorden</div>
+    </div>
+    <div class="kpi">
+        <i class="fa-solid fa-warehouse kpi-icon"></i>
+        <div class="kpi-label">Valor del inventario</div>
+        <div class="kpi-value">{{ kpis.valor_inventario | money }}</div>
+        <div class="kpi-foot">a costo · {{ kpis.productos_activos | num }} productos activos</div>
+    </div>
+    <div class="kpi">
+        <i class="fa-solid fa-hourglass-half kpi-icon"></i>
+        <div class="kpi-label">Stock sin rotación</div>
+        <div class="kpi-value">{{ valor_inmovilizado | money }}</div>
+        <div class="kpi-foot">{{ total_sin_rotacion }} productos sin ventas recientes</div>
+    </div>
+</section>
+
+<div class="grid grid-21">
+    <div class="card-box">
+        <div class="card-title-row"><h2>Ventas por mes</h2><small>últimos 12 meses</small></div>
+        <div class="chart-frame"><canvas id="chVentas"></canvas></div>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>% de pedidos no atendidos</h2><small>Propuesta 7</small></div>
+        <div class="chart-frame"><canvas id="chNA"></canvas></div>
+    </div>
+</div>
+
+<div class="grid grid-21 mt-section">
+    <div class="card-box">
+        <div class="card-title-row">
+            <h2>Reponer primero</h2>
+            <a class="small-text" href="{{ url_for('reportes.reposicion') }}">Ver los {{ total_reposicion }} →</a>
+        </div>
+        <div class="table-wrap">
+            <table class="table table-hover">
+                <thead><tr><th>ABC</th><th>Código</th><th>Producto</th><th class="num">Stock</th><th class="num">Reorden</th><th class="num">Pedir</th><th>Estado</th></tr></thead>
+                <tbody>
+                {% for f in reposicion %}
+                <tr>
+                    <td>{{ abc(f.clase) }}</td>
+                    <td><a class="code" href="{{ url_for('productos.detalle', producto_id=f.producto.id) }}">{{ f.producto.codigo }}</a></td>
+                    <td>{{ f.producto.nombre }}</td>
+                    <td class="num">{{ f.stock }}</td>
+                    <td class="num">{{ f.producto.punto_reorden }}</td>
+                    <td class="num"><b>{{ f.sugerido }}</b></td>
+                    <td>{{ estado_stock(f.estado) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="muted">No hay productos por debajo del punto de reorden.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Clasificación ABC</h2><a class="small-text" href="{{ url_for('reportes.abc') }}">Detalle →</a></div>
+        <div class="chart-frame" style="height:190px"><canvas id="chABC"></canvas></div>
+        <table class="table mt-3">
+            <thead><tr><th>Clase</th><th class="num">Productos</th><th class="num">% ventas</th></tr></thead>
+            <tbody>
+            {% for r in resumen_abc %}
+            <tr><td>{{ abc(r.clase) }}</td><td class="num">{{ r.productos }} <span class="muted">({{ r.pct_productos | pct(0) }})</span></td><td class="num">{{ r.pct_valor | pct }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card-box mt-section">
+    <div class="card-title-row"><h2>Ventas por categoría</h2><small>últimos 90 días</small></div>
+    <div class="chart-frame" style="height:380px"><canvas id="chCat"></canvas></div>
+</div>
+
+<div class="grid grid-2 mt-section">
+    <div class="card-box">
+        <div class="card-title-row"><h2>Últimos no atendidos</h2><a class="small-text" href="{{ url_for('pedidos.lista') }}">Todos →</a></div>
+        <table class="table">
+            <tbody>
+            {% for p in ultimos_na %}
+            <tr>
+                <td><span class="code">{{ p.producto.codigo if p.producto else '—' }}</span><div class="small-text muted">{{ p.producto.nombre if p.producto else p.descripcion }}</div></td>
+                <td class="num">{{ p.cantidad }}</td>
+                <td class="small-text muted">{{ p.fecha | fecha }}<br>{{ p.canal }}</td>
+            </tr>
+            {% else %}
+            <tr><td class="muted">Sin registros.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Stock parado</h2><a class="small-text" href="{{ url_for('reportes.rotacion') }}">Rotación →</a></div>
+        <table class="table">
+            <tbody>
+            {% for r in sin_rotacion %}
+            <tr>
+                <td><a class="code" href="{{ url_for('productos.detalle', producto_id=r.producto.id) }}">{{ r.producto.codigo }}</a><div class="small-text muted">{{ r.producto.nombre }}</div></td>
+                <td class="num">{{ r.stock }} u.<div class="small-text muted">{{ r.valor_stock | money }}</div></td>
+            </tr>
+            {% else %}
+            <tr><td class="muted">No hay stock parado.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const C = {{ charts | tojson }};
+MAZA.chart("chVentas", { type: "bar", data: { labels: C.ventas.labels, datasets: [{ label: "Ventas (Bs)", data: C.ventas.data, backgroundColor: MAZA.INK, borderRadius: 5 }] },
+    options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => MAZA.fmtBs(c.raw) } } }, scales: { y: { ticks: { callback: (v) => "Bs " + (v / 1000) + "k" } } } } });
+MAZA.chart("chNA", { type: "line", data: { labels: C.no_atendidos.labels, datasets: [{ label: "% no atendido", data: C.no_atendidos.data, borderColor: MAZA.RED, backgroundColor: "rgba(225,6,0,.1)", fill: true, tension: .3, pointRadius: 3 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + " %" } } } } });
+MAZA.chart("chABC", { type: "doughnut", data: { labels: C.abc.labels, datasets: [{ data: C.abc.data, backgroundColor: [MAZA.RED, MAZA.INK, "#D4D6DA"], borderWidth: 0 }] },
+    options: { cutout: "62%", plugins: { legend: { position: "right" } } } });
+MAZA.chart("chCat", { type: "bar", data: { labels: C.categorias.labels, datasets: [{ data: C.categorias.data, backgroundColor: MAZA.palette, borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => MAZA.fmtBs(c.raw) } } }, scales: { x: { ticks: { callback: (v) => (v / 1000) + "k" } }, y: { ticks: { autoSkip: false } } } } });
+</script>
+{% endblock %}

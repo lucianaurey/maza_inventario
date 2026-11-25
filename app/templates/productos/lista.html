@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import abc, marca, estado_stock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Productos</h1>
+        <p>{{ productos|length }} códigos cargados desde el catálogo MAZA 2026 y el catálogo AMC 2025. Busca por código, equivalente o vehículo.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-light-line" href="{{ url_for('productos.exportar') }}"><i class="fa-solid fa-download"></i> Exportar CSV</a>
+        {% if current_user.puede('gerencia', 'almacen') %}
+        <a class="btn btn-maza" href="{{ url_for('productos.nuevo') }}"><i class="fa-solid fa-plus"></i> Nuevo producto</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card-box">
+    <div class="filter-bar">
+        <label>Categoría
+            <select class="form-select" id="fCategoria"><option value="">Todas</option>{% for c in categorias %}<option>{{ c.nombre }}</option>{% endfor %}</select>
+        </label>
+        <label>Marca
+            <select class="form-select" id="fMarca"><option value="">Todas</option><option>MAZA Parts</option><option>AMC</option><option>Importada</option><option>Original</option></select>
+        </label>
+        <label>Estado de stock
+            <select class="form-select" id="fEstado">
+                <option value="">Todos</option>
+                <option value="Agotado" {% if filtro_estado == 'agotado' %}selected{% endif %}>Agotado</option>
+                <option value="Crítico">Crítico</option>
+                <option value="Reponer">Reponer</option>
+                <option value="Disponible">Disponible</option>
+            </select>
+        </label>
+        <label>Clase ABC
+            <select class="form-select" id="fABC"><option value="">Todas</option><option>A</option><option>B</option><option>C</option></select>
+        </label>
+    </div>
+    <div class="table-wrap">
+        <table class="table table-hover w-100" id="tablaProductos">
+            <thead>
+            <tr><th>ABC</th><th>Código</th><th>Producto</th><th>Aplicación</th><th>Categoría</th><th>Marca</th>
+                <th class="num">Stock</th><th class="num">Mayorista</th><th>Estado</th><th class="no-sort"></th></tr>
+            </thead>
+            <tbody>
+            {% for p in productos %}
+            {% set s = stock.get(p.id, 0) %}
+            {% set est = 'agotado' if s <= 0 else ('critico' if s <= p.stock_minimo else ('reponer' if s <= p.punto_reorden else 'ok')) %}
+            <tr class="{% if not p.activo %}text-muted{% endif %}">
+                <td data-order="{{ clases.get(p.id, 'C') }}">{{ abc(clases.get(p.id, 'C')) }}</td>
+                <td><a class="code" href="{{ url_for('productos.detalle', producto_id=p.id) }}">{{ p.codigo }}</a>
+                    {% if p.codigos_alternos %}<div class="small-text muted">{{ p.codigos_alternos[:40] }}</div>{% endif %}</td>
+                <td>{{ p.nombre }}{% if not p.activo %} <span class="estado neutral">inactivo</span>{% endif %}</td>
+                <td class="small-text">{{ (p.aplicacion or '')[:80] }}</td>
+                <td class="small-text">{{ p.categoria.nombre }}</td>
+                <td>{{ marca(p.marca) }}</td>
+                <td class="num" data-order="{{ s }}"><b>{{ s }}</b></td>
+                <td class="num" data-order="{{ p.precio_mayorista }}">{{ p.precio_mayorista | money }}</td>
+                <td>{{ estado_stock(est) }}</td>
+                <td class="text-end"><a class="btn btn-sm btn-light-line" href="{{ url_for('productos.detalle', producto_id=p.id) }}"><i class="fa-solid fa-eye"></i></a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dt = $("#tablaProductos").DataTable({
+    language: MAZA_DT_ES, pageLength: 25, order: [[1, "asc"]],
+    dom: "<'row g-2 mb-2'<'col-md-6'B><'col-md-6'f>>t<'row g-2 mt-2'<'col-md-6'i><'col-md-6'p>>",
+    buttons: [{ extend: "excelHtml5", text: '<i class="fa-solid fa-file-excel"></i> Excel', title: "Productos MAZA" }],
+    columnDefs: [{ targets: "no-sort", orderable: false }],
+});
+const filtros = { fABC: 0, fCategoria: 4, fMarca: 5, fEstado: 8 };
+Object.entries(filtros).forEach(([id, col]) => {
+    const el = document.getElementById(id);
+    const aplicar = () => dt.column(col).search(el.value ? "^" + $.fn.dataTable.util.escapeRegex(el.value) + "$" : "", true, false).draw();
+    el.addEventListener("change", aplicar);
+    if (el.value) aplicar();
+});
+</script>
+{% endblock %}

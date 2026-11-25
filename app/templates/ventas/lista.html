@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Ventas</h1><p>{{ cantidad | num }} ventas confirmadas por {{ total | money }} en el periodo.</p></div>
+    <div class="page-actions">{% if current_user.puede('gerencia', 'ventas') %}<a class="btn btn-maza" href="{{ url_for('ventas.nueva') }}"><i class="fa-solid fa-plus"></i> Nueva venta</a>{% endif %}</div>
+</div>
+<form class="filter-bar card-box" method="get">
+    <label>Desde<input class="form-control" type="date" name="desde" value="{{ desde }}"></label>
+    <label>Hasta<input class="form-control" type="date" name="hasta" value="{{ hasta }}"></label>
+    <button class="btn btn-dark-soft" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+</form>
+<div class="card-box mt-section">
+    <table class="table table-hover js-datatable" data-order='[[1,"desc"]]' data-export-title="Ventas MAZA">
+        <thead><tr><th>N.º</th><th>Fecha</th><th>Cliente</th><th>Canal</th><th>Almacén</th><th>Precio</th><th class="num">Ítems</th><th class="num">Total</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for v in ventas %}
+        <tr>
+            <td><a class="code" href="{{ url_for('ventas.detalle', venta_id=v.id) }}">{{ v.numero }}</a></td>
+            <td data-order="{{ v.fecha.isoformat() }}">{{ v.fecha | fecha(true) }}</td>
+            <td>{{ v.cliente.nombre if v.cliente else 'Cliente de mostrador' }}</td>
+            <td class="small-text">{{ v.canal }}</td>
+            <td class="small-text">{{ v.almacen.ciudad }}</td>
+            <td class="small-text">{{ v.tipo_precio }}</td>
+            <td class="num">{{ v.detalles|length }}</td>
+            <td class="num" data-order="{{ v.total }}"><b>{{ v.total | money }}</b></td>
+            <td><span class="estado {{ v.estado }}">{{ v.estado }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

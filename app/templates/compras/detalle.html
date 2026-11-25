@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Ingreso <span class="accent">{{ compra.numero }}</span></h1><p>{{ compra.fecha | fecha(true) }} · {{ compra.almacen.nombre }}</p></div>
+    <div class="page-actions"><button class="btn btn-light-line" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button></div>
+</div>
+<div class="card-box" style="max-width:900px">
+    <div class="row small-text mb-3">
+        <div class="col-md-6"><b>Proveedor:</b> {{ compra.proveedor.nombre if compra.proveedor else '—' }}</div>
+        <div class="col-md-6 text-md-end"><b>Documento:</b> {{ compra.documento or '—' }} · <b>Registró:</b> {{ compra.usuario.nombre_completo if compra.usuario else 'sistema' }}</div>
+    </div>
+    <table class="table">
+        <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Costo</th><th class="num">Subtotal</th></tr></thead>
+        <tbody>{% for d in compra.detalles %}<tr><td class="code">{{ d.producto.codigo }}</td><td>{{ d.producto.nombre }}</td><td class="num">{{ d.cantidad }}</td><td class="num">{{ d.costo_unitario | money }}</td><td class="num">{{ d.subtotal | money }}</td></tr>{% endfor %}</tbody>
+        <tfoot><tr><td colspan="4" class="num"><b>Total</b></td><td class="num"><b>{{ compra.total | money }}</b></td></tr></tfoot>
+    </table>
+</div>
+{% endblock %}

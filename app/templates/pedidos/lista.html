@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Pedidos <span class="accent">no atendidos</span></h1>
+        <p>Cada vez que un cliente pide algo que no hay, se anota aquí. Es el indicador de la Propuesta 7: el porcentaje de líneas pedidas que no se pudieron atender.</p></div>
+    <div class="page-actions">{% if current_user.puede('gerencia', 'ventas', 'almacen') %}<a class="btn btn-maza" href="{{ url_for('pedidos.nuevo') }}"><i class="fa-solid fa-plus"></i> Registrar</a>{% endif %}</div>
+</div>
+
+<section class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Línea base</div><div class="kpi-value">{{ base.base | pct if base.base is not none else '—' }}</div><div class="kpi-foot">primeros 3 meses con datos{% if base.meses_base %} ({{ base.meses_base }}){% endif %}</div></div>
+    <div class="kpi red"><div class="kpi-label">Mes actual</div><div class="kpi-value">{{ base.actual | pct if base.actual is not none else '—' }}</div>
+        <div class="kpi-foot">{% if base.variacion is not none %}<span class="{{ 'up' if base.variacion <= 0 else 'down' }}">{{ ('%+.1f' % base.variacion)|replace('.', ',') }} pts</span> frente a la línea base{% endif %}</div></div>
+    <div class="kpi ok"><div class="kpi-label">Meta (mitad de la base)</div><div class="kpi-value">{{ base.meta | pct if base.meta is not none else '—' }}</div><div class="kpi-foot">al mes 12 del plan</div></div>
+    <div class="kpi"><div class="kpi-label">Registros en el periodo</div><div class="kpi-value">{{ pedidos|length | num }}</div><div class="kpi-foot">{{ desde | fecha }} – {{ hasta | fecha }}</div></div>
+</section>
+
+<div class="grid grid-21">
+    <div class="card-box">
+        <div class="card-title-row"><h2>% de líneas no atendidas por mes</h2><small>vendidas + no atendidas = total pedido</small></div>
+        <div class="chart-frame"><canvas id="chNA"></canvas></div>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Lo que más falta</h2><small>en el periodo</small></div>
+        <table class="table">
+            <thead><tr><th>Producto</th><th class="num">Veces</th><th class="num">Unid.</th></tr></thead>
+            <tbody>
+            {% for r in ranking %}
+            <tr><td>{% if r.producto %}<a class="code" href="{{ url_for('productos.detalle', producto_id=r.producto.id) }}">{{ r.producto.codigo }}</a><div class="small-text muted">{{ r.producto.nombre }}</div>{% else %}<i>{{ r.descripcion }}</i> <span class="estado neutral">fuera de catálogo</span>{% endif %}</td>
+                <td class="num"><b>{{ r.veces }}</b></td><td class="num">{{ r.unidades }}</td></tr>
+            {% else %}<tr><td colspan="3" class="muted">Sin registros.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid grid-2 mt-section">
+    <div class="card-box"><div class="card-title-row"><h2>Por canal</h2></div>
+        {% for canal, n in por_canal %}<div class="d-flex justify-content-between border-bottom py-1"><span>{{ canal }}</span><b>{{ n }}</b></div>{% else %}<span class="muted">—</span>{% endfor %}</div>
+    <div class="card-box"><div class="card-title-row"><h2>Por tipo de cliente</h2></div>
+        {% for t, n in por_tipo %}<div class="d-flex justify-content-between border-bottom py-1"><span>{{ t }}</span><b>{{ n }}</b></div>{% else %}<span class="muted">—</span>{% endfor %}</div>
+</div>
+
+<form class="filter-bar card-box mt-section" method="get">
+    <label>Desde<input class="form-control" type="date" name="desde" value="{{ desde }}"></label>
+    <label>Hasta<input class="form-control" type="date" name="hasta" value="{{ hasta }}"></label>
+    <button class="btn btn-dark-soft" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+</form>
+<div class="card-box mt-section">
+    <table class="table table-hover js-datatable" data-order='[[0,"desc"]]' data-export-title="Pedidos no atendidos MAZA">
+        <thead><tr><th>Fecha</th><th>Producto</th><th class="num">Cant.</th><th>Cliente</th><th>Tipo</th><th>Canal</th><th>Motivo</th><th>Almacén</th></tr></thead>
+        <tbody>
+        {% for p in pedidos %}
+        <tr>
+            <td data-order="{{ p.fecha.isoformat() }}">{{ p.fecha | fecha(true) }}</td>
+            <td>{% if p.producto %}<a class="code" href="{{ url_for('productos.detalle', producto_id=p.producto.id) }}">{{ p.producto.codigo }}</a> <span class="small-text muted">{{ p.producto.nombre }}</span>{% else %}<i>{{ p.descripcion }}</i>{% endif %}</td>
+            <td class="num">{{ p.cantidad }}</td>
+            <td class="small-text">{{ p.cliente.nombre if p.cliente else '—' }}</td>
+            <td class="small-text">{{ p.tipo_cliente }}</td>
+            <td class="small-text">{{ p.canal }}</td>
+            <td><span class="estado {{ 'agotado' if p.motivo == 'Sin stock' else 'neutral' }}">{{ p.motivo }}</span></td>
+            <td class="small-text">{{ p.almacen.ciudad if p.almacen else '' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const D = {{ chart | tojson }};
+MAZA.chart("chNA", { type: "line", data: { labels: D.labels, datasets: [
+    { label: "% no atendido", data: D.pct, borderColor: MAZA.RED, backgroundColor: "rgba(225,6,0,.1)", fill: true, tension: .3 },
+    { label: "Meta", data: D.meta, borderColor: "#1E8E5A", borderDash: [6, 5], pointRadius: 0, fill: false },
+] }, options: { scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + " %" } } } } });
+</script>
+{% endblock %}

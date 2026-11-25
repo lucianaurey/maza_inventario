@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-page">
+    <div class="login-hero">
+        <h1>Panel interno<br><span>de gestión</span></h1>
+        <p>Inventario, rotación de repuestos, pedidos no atendidos y reportes para decidir qué asegurar antes de anunciarlo a las tiendas.</p>
+    </div>
+    <div class="login-side">
+        <div class="login-card">
+            <img src="{{ url_for('static', filename='img/logo_maza.jpg') }}" alt="MAZA Auto Repuestos">
+            <h2>Ingreso solo para personal de MAZA</h2>
+            <form method="post" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control", autofocus=true) }}
+                </div>
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control") }}
+                </div>
+                <div class="form-check mb-4">
+                    {{ form.remember(class="form-check-input") }} {{ form.remember.label(class="form-check-label") }}
+                </div>
+                <button class="btn btn-maza w-100 justify-content-center py-2" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Ingresar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

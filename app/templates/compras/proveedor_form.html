@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="page-head"><div><h1>{{ 'Editar proveedor' if proveedor else 'Nuevo proveedor' }}</h1></div></div>
+<form method="post" class="card-box" style="max-width:800px" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row g-3">
+        {{ field(form.nombre, "col-md-8") }}{{ field(form.pais, "col-md-4") }}
+        {{ field(form.contacto, "col-md-5") }}{{ field(form.telefono, "col-md-4") }}{{ field(form.dias_entrega, "col-md-3") }}
+        {{ field(form.activo, "col-12") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="page-head"><div><h1>{{ 'Editar usuario' if usuario else 'Nuevo usuario' }}</h1></div></div>
+<form method="post" class="card-box" style="max-width:800px" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row g-3">
+        {{ field(form.username, "col-md-4") }}{{ field(form.nombre_completo, "col-md-8") }}
+        {{ field(form.email, "col-md-6") }}{{ field(form.rol, "col-md-3") }}{{ field(form.estado, "col-md-3") }}
+        {{ field(form.password, "col-md-6") }}
+    </div>
+    <div class="mt-4"><button class="btn btn-maza" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button></div>
+</form>
+{% endblock %}

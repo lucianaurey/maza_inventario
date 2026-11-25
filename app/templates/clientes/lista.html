@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Clientes</h1><p>Tiendas, talleres y conductores registrados. El estado se calcula con la fecha de su última compra.</p></div>
+    <div class="page-actions">
+        <a class="btn btn-light-line" href="{{ url_for('reportes.clientes') }}"><i class="fa-solid fa-chart-simple"></i> Reporte mayorista</a>
+        {% if current_user.puede('gerencia', 'ventas') %}<a class="btn btn-maza" href="{{ url_for('ventas.cliente_nuevo') }}"><i class="fa-solid fa-plus"></i> Nuevo cliente</a>{% endif %}
+    </div>
+</div>
+<div class="card-box">
+    <table class="table table-hover js-datatable" data-order='[[5,"desc"]]' data-export-title="Clientes MAZA">
+        <thead><tr><th>Cliente</th><th>Tipo</th><th>Ciudad</th><th>Teléfono</th><th>Origen</th><th class="num">Compras</th><th class="num">Total</th><th>Última compra</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+        <tr>
+            <td><a href="{{ url_for('ventas.cliente_detalle', cliente_id=f.cliente.id) }}"><b>{{ f.cliente.nombre }}</b></a>
+                {% if f.cliente.registrado_whatsapp %}<i class="fa-brands fa-whatsapp text-success ms-1" title="Registrado en WhatsApp Business"></i>{% endif %}
+                {% if f.cliente.recibio_kit %}<i class="fa-solid fa-gift text-red ms-1" title="Recibió kit de bienvenida"></i>{% endif %}</td>
+            <td class="small-text">{{ f.cliente.tipo }}</td>
+            <td class="small-text">{{ f.cliente.ciudad }}{% if f.cliente.zona %} · {{ f.cliente.zona }}{% endif %}</td>
+            <td class="small-text">{{ f.cliente.telefono or '' }}</td>
+            <td class="small-text">{{ f.cliente.canal_origen or '' }}</td>
+            <td class="num">{{ f.compras }}</td>
+            <td class="num" data-order="{{ f.total }}">{{ f.total | money }}</td>
+            <td data-order="{{ f.ultima.isoformat() if f.ultima else '' }}">{{ f.ultima | fecha }}</td>
+            <td><span class="estado {{ f.estado | replace(' ', '-') }}">{{ f.estado }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

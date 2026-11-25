@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Nuevo ingreso de mercadería</h1><p>Suma stock al almacén elegido y actualiza el costo promedio de cada producto.</p></div>
+    <div class="page-actions">
+        <div class="dropdown">
+            <button class="btn btn-light-line dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> Cargar desde reposición</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('compras.nueva', desde_reposicion=1) }}">Todos los proveedores</a></li>
+                {% for p in proveedores %}<li><a class="dropdown-item" href="{{ url_for('compras.nueva', desde_reposicion=1, proveedor_id=p.id) }}">{{ p.nombre }}</a></li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% if precarga %}<div class="alert alert-info">Se cargaron {{ precarga|length }} productos de la reposición sugerida. Revisa las cantidades antes de confirmar.</div>{% endif %}
+<form method="post" id="docForm" data-mode="compra" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="grid grid-21">
+        <div class="card-box">
+            <div class="card-title-row"><h2>Productos</h2></div>
+            <div class="search-box mb-3">
+                <input class="form-control product-search" type="search" autocomplete="off" placeholder="Busca por código, equivalente o vehículo" data-url="{{ url_for('productos.api_buscar') }}">
+                <div class="search-results"></div>
+            </div>
+            <div class="table-wrap">
+                <table class="table lines-table" id="lines">
+                    <thead><tr><th>Producto</th><th class="num">Stock</th><th style="width:110px">Cant.</th><th style="width:130px">Costo (Bs)</th><th class="num">Subtotal</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <div class="muted py-4 text-center" id="linesEmpty"><i class="fa-solid fa-magnifying-glass"></i> Agrega productos con el buscador.</div>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="card-title-row"><h2>Datos del ingreso</h2></div>
+            <div class="mb-3"><label class="form-label">Almacén</label>
+                <select class="form-select" name="almacen_id" id="almacen_id">{% for a in almacenes %}<option value="{{ a.id }}">{{ a.nombre }}</option>{% endfor %}</select></div>
+            <div class="mb-3"><label class="form-label">Proveedor</label>
+                <select class="form-select" name="proveedor_id"><option value="">—</option>{% for p in proveedores %}<option value="{{ p.id }}" {% if proveedor_sel == p.id %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select></div>
+            <div class="mb-3"><label class="form-label">Factura / documento</label><input class="form-control" name="documento" maxlength="60"></div>
+            <div class="mb-3"><label class="form-label">Nota</label><input class="form-control" name="nota" maxlength="255"></div>
+            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="actualizar_costo" value="1" id="actCosto" checked><label class="form-check-label" for="actCosto">Actualizar el costo promedio</label></div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3"><span class="muted">Total</span><span class="doc-total" id="docTotal">Bs 0,00</span></div>
+            <button class="btn btn-maza w-100 justify-content-center py-2" type="submit"><i class="fa-solid fa-check"></i> Registrar ingreso</button>
+        </div>
+    </div>
+</form>
+{% if precarga %}<script type="application/json" id="precarga">{{ precarga | tojson }}</script>{% endif %}
+{% endblock %}

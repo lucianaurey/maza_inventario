@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Usuarios</h1><p>Administrador: todo · Gerencia: reportes, precios, anulaciones e importación · Ventas: ventas, clientes y pedidos no atendidos · Almacén: productos, ajustes, transferencias y compras.</p></div>
+    <div class="page-actions"><a class="btn btn-maza" href="{{ url_for('admin.usuario_form') }}"><i class="fa-solid fa-plus"></i> Nuevo usuario</a></div>
+</div>
+<div class="card-box">
+    <table class="table table-hover">
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+        <tbody>
+        {% for u in usuarios %}
+        <tr><td class="code">{{ u.username }}</td><td>{{ u.nombre_completo }}</td><td>{{ u.email }}</td><td>{{ u.rol_nombre }}</td>
+            <td><span class="estado {{ u.estado }}">{{ u.estado }}</span></td><td>{{ u.ultimo_acceso | fecha(true) }}</td>
+            <td class="text-end"><a class="btn btn-sm btn-light-line" href="{{ url_for('admin.usuario_form', usuario_id=u.id) }}"><i class="fa-solid fa-pen"></i></a></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

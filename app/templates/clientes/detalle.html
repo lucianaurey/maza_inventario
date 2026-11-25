@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>{{ cliente.nombre }}</h1><p>{{ cliente.tipo }} · {{ cliente.ciudad }}{% if cliente.zona %}, {{ cliente.zona }}{% endif %} · cliente desde {{ cliente.fecha_registro | fecha }}</p></div>
+    <div class="page-actions">{% if current_user.puede('gerencia', 'ventas') %}<a class="btn btn-dark-soft" href="{{ url_for('ventas.cliente_editar', cliente_id=cliente.id) }}"><i class="fa-solid fa-pen"></i> Editar</a>{% endif %}</div>
+</div>
+<section class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Compras</div><div class="kpi-value">{{ ventas|selectattr('estado', 'equalto', 'confirmada')|list|length }}</div></div>
+    <div class="kpi"><div class="kpi-label">Total comprado</div><div class="kpi-value">{{ total | money }}</div></div>
+    <div class="kpi"><div class="kpi-label">Teléfono</div><div class="kpi-value fs-5">{{ cliente.telefono or '—' }}</div><div class="kpi-foot">{{ 'Registrado en WhatsApp' if cliente.registrado_whatsapp else 'Sin registro en WhatsApp' }}</div></div>
+    <div class="kpi {{ 'red' if no_atendidos else '' }}"><div class="kpi-label">Pedidos no atendidos</div><div class="kpi-value">{{ no_atendidos|length }}</div></div>
+</section>
+<div class="grid grid-2">
+    <div class="card-box">
+        <div class="card-title-row"><h2>Compras</h2></div>
+        <table class="table table-hover js-datatable" data-order='[[1,"desc"]]' data-page-length="10">
+            <thead><tr><th>N.º</th><th>Fecha</th><th class="num">Total</th><th>Estado</th></tr></thead>
+            <tbody>{% for v in ventas %}<tr><td><a class="code" href="{{ url_for('ventas.detalle', venta_id=v.id) }}">{{ v.numero }}</a></td><td data-order="{{ v.fecha.isoformat() }}">{{ v.fecha | fecha }}</td><td class="num">{{ v.total | money }}</td><td><span class="estado {{ v.estado }}">{{ v.estado }}</span></td></tr>{% endfor %}</tbody>
+        </table>
+    </div>
+    <div class="card-box">
+        <div class="card-title-row"><h2>Lo que pidió y no había</h2></div>
+        <table class="table">
+            <thead><tr><th>Fecha</th><th>Producto</th><th class="num">Cant.</th></tr></thead>
+            <tbody>{% for p in no_atendidos %}<tr><td>{{ p.fecha | fecha }}</td><td><span class="code">{{ p.producto.codigo if p.producto else '' }}</span> {{ p.producto.nombre if p.producto else p.descripcion }}</td><td class="num">{{ p.cantidad }}</td></tr>{% else %}<tr><td colspan="3" class="muted">Sin registros.</td></tr>{% endfor %}</tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Compras e ingresos</h1><p>{{ compras|length }} ingresos por {{ total | money }} en el periodo.</p></div>
+    <div class="page-actions">
+        <a class="btn btn-light-line" href="{{ url_for('reportes.reposicion') }}"><i class="fa-solid fa-bell"></i> Ver reposición sugerida</a>
+        {% if current_user.puede('gerencia', 'almacen') %}<a class="btn btn-maza" href="{{ url_for('compras.nueva') }}"><i class="fa-solid fa-plus"></i> Nuevo ingreso</a>{% endif %}
+    </div>
+</div>
+<form class="filter-bar card-box" method="get">
+    <label>Desde<input class="form-control" type="date" name="desde" value="{{ desde }}"></label>
+    <label>Hasta<input class="form-control" type="date" name="hasta" value="{{ hasta }}"></label>
+    <button class="btn btn-dark-soft" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+</form>
+<div class="card-box mt-section">
+    <table class="table table-hover js-datatable" data-order='[[1,"desc"]]' data-export-title="Compras MAZA">
+        <thead><tr><th>N.º</th><th>Fecha</th><th>Proveedor</th><th>Documento</th><th>Almacén</th><th class="num">Ítems</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for c in compras %}
+        <tr>
+            <td><a class="code" href="{{ url_for('compras.detalle', compra_id=c.id) }}">{{ c.numero }}</a></td>
+            <td data-order="{{ c.fecha.isoformat() }}">{{ c.fecha | fecha }}</td>
+            <td>{{ c.proveedor.nombre if c.proveedor else '—' }}</td>
+            <td class="small-text">{{ c.documento or '' }}</td>
+            <td class="small-text">{{ c.almacen.ciudad }}</td>
+            <td class="num">{{ c.detalles|length }}</td>
+            <td class="num" data-order="{{ c.total }}">{{ c.total | money }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

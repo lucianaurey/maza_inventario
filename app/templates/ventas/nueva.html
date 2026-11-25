@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Nueva venta</h1><p>Si no alcanza el stock, el sistema vende lo disponible y registra el resto como pedido no atendido.</p></div>
+</div>
+<form method="post" id="docForm" data-mode="venta" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="grid grid-21">
+        <div class="card-box">
+            <div class="card-title-row"><h2>Productos</h2></div>
+            <div class="search-box mb-3">
+                <input class="form-control product-search" type="search" autocomplete="off" placeholder="Busca por código, equivalente o vehículo y presiona Enter" data-url="{{ url_for('productos.api_buscar') }}">
+                <div class="search-results"></div>
+            </div>
+            <div class="table-wrap">
+                <table class="table lines-table" id="lines">
+                    <thead><tr><th>Producto</th><th class="num">Stock</th><th style="width:110px">Cant.</th><th style="width:130px">Precio (Bs)</th><th class="num">Subtotal</th><th></th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <div class="muted py-4 text-center" id="linesEmpty"><i class="fa-solid fa-magnifying-glass"></i> Agrega productos con el buscador.</div>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="card-title-row"><h2>Datos de la venta</h2></div>
+            <div class="mb-3"><label class="form-label">Almacén</label>
+                <select class="form-select" name="almacen_id" id="almacen_id">{% for a in almacenes %}<option value="{{ a.id }}">{{ a.nombre }}</option>{% endfor %}</select></div>
+            <div class="mb-3"><label class="form-label">Cliente</label>
+                <select class="form-select" name="cliente_id"><option value="">Cliente de mostrador / conductor</option>
+                    {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }} · {{ c.tipo }}</option>{% endfor %}</select>
+                <div class="help"><a href="{{ url_for('ventas.cliente_nuevo') }}" target="_blank">+ Registrar cliente nuevo</a></div></div>
+            <div class="row g-2 mb-3">
+                <div class="col-6"><label class="form-label">Canal</label>
+                    <select class="form-select" name="canal">{% for c in canales %}<option>{{ c }}</option>{% endfor %}</select></div>
+                <div class="col-6"><label class="form-label">Lista de precios</label>
+                    <select class="form-select" name="tipo_precio" id="tipo_precio"><option value="mayorista">Mayorista</option><option value="minorista">Público</option></select></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Descuento (Bs)</label><input class="form-control" type="number" min="0" step="0.01" name="descuento" id="descuento" value="0"></div>
+            <div class="mb-3"><label class="form-label">Nota</label><input class="form-control" name="nota" maxlength="255"></div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="registrar_faltantes" value="1" id="regFalt" checked>
+                <label class="form-check-label" for="regFalt">Registrar lo que falte como pedido no atendido</label>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3"><span class="muted">Total</span><span class="doc-total" id="docTotal">Bs 0,00</span></div>
+            <button class="btn btn-maza w-100 justify-content-center py-2" type="submit"><i class="fa-solid fa-check"></i> Confirmar venta</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
