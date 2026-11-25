@@ -80,26 +80,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     register_template_filters(app)
     register_cli(app)
-    _ensure_sqlite_schema(app)
     return app
-
-
-def _ensure_sqlite_schema(app: Flask) -> None:
-    """Con SQLite local, crea las tablas si la base está vacía para evitar el error 500."""
-    if not app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite") or app.config.get("TESTING"):
-        return
-    from sqlalchemy import inspect
-
-    with app.app_context():
-        if not inspect(db.engine).has_table("usuarios"):
-            db.create_all()
-            from app.services.seed import crear_datos_base
-
-            crear_datos_base()
-            app.logger.warning(
-                "Base de datos vacía: se crearon las tablas. Ejecuta 'flask --app run.py create-admin' "
-                "para crear el usuario administrador."
-            )
 
 
 def register_template_filters(app: Flask) -> None:
@@ -179,6 +160,34 @@ def register_cli(app: Flask) -> None:
 
         nuevos = cargar_catalogo()
         click.echo(f"Productos del catálogo cargados: {nuevos} nuevos.")
+
+    @app.cli.command("preparar")
+    def preparar_command():
+        """Deja todo listo en un solo paso (pensado para Render). Se puede repetir sin borrar nada:
+        crea tablas y datos base, crea/actualiza el admin, carga el catálogo y, si DEMO_MODE=true
+        y la base no tiene ventas, genera los datos de ejemplo."""
+        from app.models import Usuario, Venta
+        from app.services.seed import cargar_catalogo, crear_datos_base, generar_demo
+
+        db.create_all()
+        crear_datos_base()
+        if app.config["ADMIN_PASSWORD"]:
+            user = Usuario.query.filter_by(username=app.config["ADMIN_USERNAME"]).first()
+            if user is None:
+                user = Usuario(username=app.config["ADMIN_USERNAME"], rol="admin", estado="activo")
+                db.session.add(user)
+            user.nombre_completo = app.config["ADMIN_FULL_NAME"]
+            user.email = app.config["ADMIN_EMAIL"]
+            user.password_hash = generate_password_hash(app.config["ADMIN_PASSWORD"])
+            db.session.commit()
+            click.echo(f"Admin listo: {user.username}")
+        else:
+            click.echo("Aviso: ADMIN_PASSWORD no está definido; no se creó el administrador.")
+        click.echo(f"Catálogo: {cargar_catalogo()} productos nuevos.")
+        if app.config["DEMO_MODE"] and Venta.query.count() == 0:
+            resumen = generar_demo()
+            click.echo("Datos de ejemplo generados: " + ", ".join(f"{k}={v}" for k, v in resumen.items()))
+        click.echo("Listo.")
 
     @app.cli.command("seed-demo")
     @click.option("--meses", default=12, show_default=True, help="Meses de historial de ventas de ejemplo.")
